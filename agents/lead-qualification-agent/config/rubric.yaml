@@ -1,0 +1,73 @@
+# Lead Qualification Rubric — V1
+# Edit weights here; no code changes needed.
+
+# ── Composite weighting ──────────────────────────────────────
+weights:
+  budget:   0.30
+  timeline: 0.30
+  intent:   0.40
+
+# ── Grade thresholds (composite 0–100) ───────────────────────
+grades:
+  A: 80   # Hot  — route to AE immediately
+  B: 60   # Warm — SDR follow-up within 24 h
+  C: 40   # Cool — enroll in nurture sequence
+  D: 0    # Cold — no action / archive
+
+# ── Routing actions per grade ────────────────────────────────
+actions:
+  A: "Route to AE — schedule demo within 24 h"
+  B: "SDR follow-up call — qualify further"
+  C: "Enroll in 30-day nurture sequence"
+  D: "Archive — flag for quarterly review"
+
+# ── Low-confidence threshold ─────────────────────────────────
+# Leads extracted with confidence below this go to human review
+human_review_confidence_threshold: 0.55
+
+# ── Budget scoring rules ─────────────────────────────────────
+budget:
+  # Score when budget is explicit and fits pricing
+  explicit_fit:        90
+  explicit_stretch:    60   # budget slightly below ideal
+  explicit_mismatch:   15   # clearly out of range
+  # Score when budget is only implied
+  implied_positive:    65
+  implied_neutral:     40
+  implied_negative:    10
+  # No budget info at all
+  not_mentioned:       30
+
+  # Thresholds (USD) — tune to your pricing
+  pricing_min:     5_000
+  pricing_max:   500_000
+
+# ── Timeline scoring rules ───────────────────────────────────
+timeline:
+  within_30_days:   95
+  within_90_days:   75
+  within_180_days:  50
+  beyond_180_days:  20
+  no_timeline:      25
+
+  # Urgency language boosts (additive, capped at 100)
+  urgency_boost_per_signal: 5
+  max_urgency_boost:        15
+
+# ── Intent scoring rules ─────────────────────────────────────
+intent:
+  # Decision authority
+  decision_maker:   30   # points (out of 40 authority max)
+  influencer:       18
+  unknown:           8
+
+  # Pain point clarity
+  pain_per_point:    8   # points per distinct pain point
+  max_pain_points:   4   # cap contribution
+
+  # Engagement signals
+  competitor_eval:  10   # actively comparing vendors
+  repeat_visit:      8   # multiple touchpoints
+  demo_requested:   12   # explicit ask
+  pricing_asked:    10   # asked about pricing
+  

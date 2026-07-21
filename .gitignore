@@ -1,2 +1,97 @@
-.env
+# ── Virtual Environments ──────────────────────────────────────────────────────
+# venv/ is the canonical virtual environment for this repo.
+# .venv/ is ignored so any accidental creation of it is not tracked.
+.venv/
+.venv
+venv/
+env/
+.env.local
+
+# ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.so
+*.dylib
+
+# ── Testing & Coverage ────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ── Alembic ───────────────────────────────────────────────────────────────────
+# Do NOT ignore alembic/versions — migration files must be tracked.
+*.pyc
+
+# ── Secrets & Credentials ─────────────────────────────────────────────────────
+# .env files contain secrets. All variants are ignored.
+.env
+.env.*
+.env.example
+backend/.env
+backend/.env.*
+backend/.env.example
+agents/**/.env
+agents/**/.env.*
+agents/**/.env.example
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Credentials and secrets files
+credentials.json
+secrets.yaml
+secrets.yml
+*-credentials.json
+service-account*.json
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+# Ignore local volume data if ever mounted to repo dir
+postgres_data/
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+*.swp
+*.swo
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+
+# ── Kiro AI artifacts ─────────────────────────────────────────────────────────
+.kiro/
+
+# ── Additional virtual environments ───────────────────────────────────────────
+venv_backend/
+
+# ── Error logs & debugging ────────────────────────────────────────────────────
+error_logging/
+
+# ── Memory system artifacts ───────────────────────────────────────────────────
+memory_system/
+
+# ── Task tracking & planning ──────────────────────────────────────────────────
+implementation_plan_*.md
+tasks.md
+tasks_w2.md
+
+# ── Test & utility scripts ────────────────────────────────────────────────────
+check_agents.sh
+check_agents1.sh
+test_api.py

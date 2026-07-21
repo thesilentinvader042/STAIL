@@ -1,0 +1,9 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "extraPaths": [
+    "../memory_system"
+  ],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic"
+}

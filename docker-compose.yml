@@ -1,0 +1,190 @@
+services:
+
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: realty_os_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       realty_os
+      POSTGRES_USER:     realty_user
+      POSTGRES_PASSWORD: realty_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./V001__realty_os_full_schema.sql:/docker-entrypoint-initdb.d/V001__realty_os_full_schema.sql:ro
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - >
+          pg_isready -U realty_user -d realty_os &&
+          psql -U realty_user -d realty_os -c "SELECT 1 FROM information_schema.schemata WHERE schema_name='realty_os'" | grep -q 1
+      interval: 5s
+      timeout:  10s
+      retries:  20
+
+  redis:
+    image: redis:7-alpine
+    container_name: realty_os_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test:     ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout:  3s
+      retries:  5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: realty_os_backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      DATABASE_URL:                   postgresql://realty_user:realty_pass@db:5432/realty_os?options=-csearch_path%3Drealty_os%2Cpublic
+      REDIS_URL:                      redis://redis:6379/0
+      PROPERTY_DISCOVERY_AGENT_URL:   http://property-discovery-agent:8001
+      LEAD_QUALIFICATION_AGENT_URL:   http://lead-qualification-agent:8002
+      BUYER_AGENT_URL:                http://buyer-agent:8003
+      PROPERTY_AGENT_URL:             http://property-agent:8004
+      RECOMMENDATION_AGENT_URL:       http://recommendation-agent:8005
+      CRM_AGENT_URL:                  http://crm-agent:8006
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:     ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  property-discovery-agent:
+    build:
+      context: ./agents
+      dockerfile: property-discovery/Dockerfile
+    container_name: realty_os_agt01
+    restart: unless-stopped
+    env_file: ./agents/property-discovery/.env
+    environment:
+      BACKEND_API_URL: http://backend:8000
+    ports:
+      - "8001:8001"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:     ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  lead-qualification-agent:
+    build:
+      context: ./agents
+      dockerfile: lead-qualification-agent/Dockerfile
+    container_name: realty_os_agt02
+    restart: unless-stopped
+    env_file: ./agents/lead-qualification-agent/.env
+    environment:
+      BACKEND_API_URL: http://backend:8000
+    ports:
+      - "8002:8002"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:     ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  buyer-agent:
+    build:
+      context: ./agents
+      dockerfile: buyer-agent/Dockerfile
+    container_name: realty_os_agt03
+    restart: unless-stopped
+    env_file: ./agents/buyer-agent/.env
+    environment:
+      BACKEND_API_URL: http://backend:8000
+    ports:
+      - "8003:8003"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:     ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  property-agent:
+    build:
+      context: ./agents
+      dockerfile: property-agent/Dockerfile
+    container_name: realty_os_agt04
+    restart: unless-stopped
+    env_file: ./agents/property-agent/.env
+    environment:
+      BACKEND_API_URL: http://backend:8000
+    ports:
+      - "8004:8004"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:     ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  recommendation-agent:
+    build:
+      context: ./agents
+      dockerfile: recommendation-agent/Dockerfile
+    container_name: realty_os_agt05
+    restart: unless-stopped
+    env_file: ./agents/recommendation-agent/.env
+    environment:
+      BACKEND_API_URL: http://backend:8000
+    ports:
+      - "8005:8005"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:     ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  crm-agent:
+    build:
+      context: ./agents
+      dockerfile: crm-agent/Dockerfile
+    container_name: realty_os_agt06
+    restart: unless-stopped
+    env_file: ./agents/crm-agent/.env
+    environment:
+      BACKEND_API_URL: http://backend:8000
+    ports:
+      - "8006:8006"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:     ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+volumes:
+  postgres_data:

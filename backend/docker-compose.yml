@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  db:
+    build:
+      context: ../db
+      dockerfile: Dockerfile
+    container_name: realty_os_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: realty_os
+      POSTGRES_USER: realty_user
+      POSTGRES_PASSWORD: realty_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../V001__realty_os_full_schema.sql:/docker-entrypoint-initdb.d/V001__realty_os_full_schema.sql:ro
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - >
+          pg_isready -U realty_user -d realty_os &&
+          psql -U realty_user -d realty_os -c "SELECT 1 FROM information_schema.schemata WHERE schema_name='realty_os'" | grep -q 1
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: realty_os_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_data:
