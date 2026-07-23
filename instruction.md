@@ -1,4 +1,4 @@
-# STAIL Realty OS — Local Setup & Execution Guide (`instruction.md`)
+# STAIL Realty OS — Local Setup & Execution Guide
 
 This guide explains how to set up, run, and replicate the full **STAIL Realty OS multi-agent pipeline** locally on your machine.
 
