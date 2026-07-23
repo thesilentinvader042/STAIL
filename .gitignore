@@ -34,16 +34,19 @@ htmlcov/
 *.pyc
 
 # ── Secrets & Credentials ─────────────────────────────────────────────────────
-# .env files contain secrets. All variants are ignored.
+# .env files contain secrets — ignore all REAL env files.
+# .env.example files must be TRACKED so teammates know what vars to set.
 .env
-.env.*
-.env.example
 backend/.env
-backend/.env.*
-backend/.env.example
-agents/**/.env
-agents/**/.env.*
-agents/**/.env.example
+
+# Agent env files (real secrets only, not examples)
+agents/buyer-agent/.env
+agents/lead-qualification-agent/.env
+agents/property-agent/.env
+agents/recommendation-agent/.env
+agents/crm-agent/.env
+agents/property-discovery/.env
+agents/orchestrator/.env
 
 # Private keys and certificates
 *.pem
@@ -95,3 +98,59 @@ tasks_w2.md
 check_agents.sh
 check_agents1.sh
 test_api.py
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ── FRONTEND (React + Vite + TypeScript) ─────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Node dependencies — never commit node_modules
+node_modules/
+**/node_modules/
+
+# Vite build output
+frontend/dist/
+frontend/.vite/
+
+# Next.js build output (if used later)
+frontend/.next/
+frontend/out/
+
+# React / TypeScript build artifacts
+frontend/build/
+frontend/tsconfig.tsbuildinfo
+**/*.tsbuildinfo
+
+# Frontend environment files (real secrets only, not examples)
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Package manager lock files — pick ONE and track it, ignore others
+# If using npm: track package-lock.json, ignore yarn.lock / pnpm-lock.yaml
+yarn.lock
+pnpm-lock.yaml
+# If using yarn: uncomment the line below and comment out yarn.lock above
+# package-lock.json
+
+# Frontend testing
+frontend/coverage/
+frontend/.nyc_output/
+
+# Storybook (if added later)
+frontend/storybook-static/
+
+# PWA / service worker generated files
+frontend/sw.js
+frontend/workbox-*.js
+
+# ESLint cache
+.eslintcache
+frontend/.eslintcache
+
+# Prettier cache
+.prettier_cache
+
+# Tailwind CSS generated (if using JIT purge outputs)
+# frontend/src/styles/tailwind.output.css

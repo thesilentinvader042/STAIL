@@ -97,7 +97,13 @@ class BuyerAgent(BaseAgent):
         # Parse JSON from LLM response
         prefs = self._parse_preferences(raw_text)
 
-        # Add clarifying questions if low confidence
+        # If LLM returned low confidence, try deterministic fallback on the original message
+        if prefs.confidence_score < 0.5:
+            fallback = self._deterministic_fallback(message)
+            if fallback:
+                prefs = fallback
+
+        # Add clarifying questions if still low confidence
         if prefs.confidence_score < 0.5:
             prefs.clarifying_questions = _DEFAULT_CLARIFYING_QUESTIONS
 
@@ -113,11 +119,11 @@ class BuyerAgent(BaseAgent):
     def _parse_preferences(self, raw_text: str) -> BuyerPreferences:
         """Parse Groq response into BuyerPreferences. Falls back to empty on any error."""
         try:
-            # Strip markdown code fences if LLM added them
             text = raw_text.strip()
-            if text.startswith("```"):
-                text = re.sub(r"^```[a-z]*\n?", "", text)
-                text = re.sub(r"\n?```$", "", text)
+            # Extract JSON object substring inside raw_text if LLM included preambles/markdown
+            match = re.search(r"\{.*\}", text, re.DOTALL)
+            if match:
+                text = match.group(0)
             
             logger.debug("Parsing preferences from: %s", text[:200])
             
@@ -141,10 +147,41 @@ class BuyerAgent(BaseAgent):
             )
         except Exception as e:
             logger.exception("Unexpected error parsing preferences: %s | Raw text: %s", e, raw_text[:300])
+            # Fallback to deterministic regex parsing if LLM output fails to parse
+            fallback = self._deterministic_fallback(raw_text)
+            if fallback:
+                return fallback
             return BuyerPreferences(
                 confidence_score=0.0,
                 clarifying_questions=_DEFAULT_CLARIFYING_QUESTIONS,
             )
+
+    def _deterministic_fallback(self, text: str) -> BuyerPreferences | None:
+        """Extract basic preferences via regex if LLM response parsing fails."""
+        bhk_match = re.findall(r"\b([1-5]\s*BHK)\b", text, re.IGNORECASE)
+        bhk_type = list(dict.fromkeys([b.upper().replace(" ", "") for b in bhk_match]))
+        
+        known_cities = ["Mumbai", "Pune", "Bangalore", "Delhi", "Gurgaon", "Noida", "Hyderabad", "Chennai", "Kolkata", "Bandra"]
+        cities = [c for c in known_cities if re.search(r"\b" + c + r"\b", text, re.IGNORECASE)]
+        if "Bandra" in cities:
+            cities.remove("Bandra")
+            if "Mumbai" not in cities:
+                cities.append("Mumbai")
+        
+        budget_max = None
+        m_budget = re.search(r"(?:under|below|max|budget)?\s*₹?\s*([\d.]+)\s*(cr|crore|l|lakh|lac)\b", text, re.IGNORECASE)
+        if m_budget:
+            budget_max = _parse_inr(m_budget.group(1) + m_budget.group(2))
+            
+        if bhk_type or cities or budget_max:
+            return BuyerPreferences(
+                budget_max=budget_max,
+                bhk_type=bhk_type,
+                cities=cities,
+                property_types=["apartment"] if bhk_type else [],
+                confidence_score=0.85,
+            )
+        return None
 
     def _build_response(self, prefs: BuyerPreferences, original_message: str) -> str:
         """Build a human-readable summary of extracted preferences."""
