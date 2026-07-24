@@ -116,7 +116,7 @@ class BackendOrchestrator:
 
                 return result
 
-            except (httpx.HTTPError, asyncio.TimeoutError) as exc:
+            except Exception as exc:
                 latency_ms = int((time.monotonic() - t0) * 1000)
                 is_last_attempt = (attempt == self._config.max_retries)
 

@@ -48,12 +48,12 @@ EXTRACTION_TOOL: dict = {
                     "description": "Whether a budget was stated, implied, or absent.",
                 },
                 "budget_range_min": {
-                    "type": "number",
-                    "description": "Minimum budget in USD if extractable, else omit.",
+                    "type": ["number", "null"],
+                    "description": "Minimum budget in USD if extractable, else null.",
                 },
                 "budget_range_max": {
-                    "type": "number",
-                    "description": "Maximum budget in USD if extractable, else omit.",
+                    "type": ["number", "null"],
+                    "description": "Maximum budget in USD if extractable, else null.",
                 },
                 "budget_currency": {
                     "type": "string",

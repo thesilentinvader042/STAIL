@@ -1,6 +1,7 @@
 from shared.base_agent import AgentResult, BaseAgent
 from tools.pipeline import LeadQualificationPipeline
 from models.schemas import LeadContext
+import asyncio
 
 class LeadQualificationAgent(BaseAgent):
     agent_id   = "AGT-02"
@@ -28,7 +29,7 @@ class LeadQualificationAgent(BaseAgent):
             raw_text=message,
             crm_fields=ctx.get("crm_fields", {}),
         )
-        result = self._pipeline.run(lead)
+        result = await asyncio.to_thread(self._pipeline.run, lead)
         response = (
             f"Grade: **{result.result.grade}** | Score: {result.result.composite_score}/100\n"
             f"Action: {result.result.recommended_action}\n"

@@ -45,6 +45,7 @@ strict = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+pythonpath = ["tests"]
 
 [tool.setuptools.packages.find]
 include = ["app*"]

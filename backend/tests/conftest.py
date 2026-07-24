@@ -72,9 +72,17 @@ class SQJsonb(TypeDecorator):  # type: ignore[misc]
 
 
 class SQArray(TypeDecorator):  # type: ignore[misc]
-    """Store PostgreSQL ARRAY columns as JSON TEXT in SQLite."""
+    """Store PostgreSQL ARRAY columns as JSON TEXT in SQLite.
+
+    Accepts and ignores the item_type argument so that ``ARRAY(Text)``
+    works the same as a bare ``ARRAY`` when the dialect is patched.
+    """
     impl = Text
     cache_ok = True
+
+    def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003
+        # Swallow item_type and any other ARRAY constructor args.
+        super().__init__()
 
     def process_bind_param(self, value, dialect):
         import json
