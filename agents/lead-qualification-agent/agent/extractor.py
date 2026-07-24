@@ -56,7 +56,7 @@ EXTRACTION_TOOL: dict = {
                     "description": "Maximum budget in USD if extractable, else null.",
                 },
                 "budget_currency": {
-                    "type": "string",
+                    "type": ["string", "null"],
                     "description": "Currency of the budget, default USD.",
                 },
                 "budget_fit": {
@@ -108,7 +108,7 @@ EXTRACTION_TOOL: dict = {
                     ),
                 },
                 "extraction_notes": {
-                    "type": "string",
+                    "type": ["string", "null"],
                     "description": "Any caveats, ambiguities, or missing context. Omit if none.",
                 },
             },
