@@ -25,6 +25,21 @@ from app.schemas.schemas import (
     UserUpdate,
 )
 
+import logging
+logger = logging.getLogger(__name__)
+
+# Import memory system if available
+try:
+    from memory.manager import memory_manager
+    HAS_MEMORY = True
+except ImportError:
+    try:
+        from memory_system.memory.manager import memory_manager
+        HAS_MEMORY = True
+    except ImportError:
+        memory_manager = None
+        HAS_MEMORY = False
+
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
@@ -176,3 +191,61 @@ def user_leads(
         q = q.filter(Enquiry.user_id == user_id)
 
     return q.order_by(Enquiry.created_at.desc()).offset(offset).limit(page_size).all()
+
+
+# ── GET /users/{user_id}/preferences ──────────────────────────────────────────
+
+@router.get(
+    "/{user_id}/preferences",
+    summary="Get user preference memory profile",
+)
+async def get_user_preferences(
+    user_id: uuid.UUID,
+    current_user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> dict:
+    if current_user.user_id != user_id and not current_user.is_superuser:
+        raise ForbiddenException("You can only view your own preferences.")
+
+    if HAS_MEMORY and memory_manager is not None:
+        try:
+            prefs = await memory_manager.read_preferences(str(user_id))
+            return prefs.model_dump() if hasattr(prefs, "model_dump") else prefs.dict()
+        except Exception as exc:
+            logger.warning("Failed to fetch preferences from memory manager: %s", exc)
+
+    return {
+        "property_type": [],
+        "budget_min": None,
+        "budget_max": None,
+        "preferred_locations": [],
+        "must_haves": [],
+        "deal_breakers": [],
+        "inferred": {},
+    }
+
+
+# ── PATCH /users/{user_id}/preferences ────────────────────────────────────────
+
+@router.patch(
+    "/{user_id}/preferences",
+    summary="Update user preference memory profile",
+)
+async def update_user_preferences(
+    user_id: uuid.UUID,
+    payload: dict,
+    current_user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> dict:
+    if current_user.user_id != user_id and not current_user.is_superuser:
+        raise ForbiddenException("You can only update your own preferences.")
+
+    if HAS_MEMORY and memory_manager is not None:
+        try:
+            updated_prefs = await memory_manager.update_preferences(str(user_id), payload)
+            return updated_prefs.model_dump() if hasattr(updated_prefs, "model_dump") else updated_prefs.dict()
+        except Exception as exc:
+            logger.error("Failed to update preferences in memory manager: %s", exc)
+            raise BadRequestException(f"Could not update preferences: {exc!s}")
+
+    return payload

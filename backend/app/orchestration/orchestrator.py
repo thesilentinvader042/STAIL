@@ -21,6 +21,18 @@ try:
 except ImportError:
     HAS_ERROR_LOGGING = False
 
+# Import memory system if available
+try:
+    from memory.manager import memory_manager
+    HAS_MEMORY = True
+except ImportError:
+    try:
+        from memory_system.memory.manager import memory_manager
+        HAS_MEMORY = True
+    except ImportError:
+        memory_manager = None
+        HAS_MEMORY = False
+
 logger = logging.getLogger("orchestrator")
 
 
@@ -154,12 +166,29 @@ class BackendOrchestrator:
         lead_id: str | None = None,
     ) -> OrchestrateResult:
         """Execute the full 5-agent pipeline: AGT-03 → AGT-04 → AGT-05 → AGT-02 → AGT-06."""
-        # Step 1: Initialize context
+        # Step 1: Initialize context and pull memory
         context: dict[str, Any] = {
             "user_id": user_id,
             "session_id": session_id,
             "lead_id": lead_id,
         }
+
+        if HAS_MEMORY and memory_manager is not None:
+            try:
+                mem_context = await memory_manager.get_agent_context(
+                    agent_name="buyer_agent",
+                    session_id=session_id,
+                    user_id=user_id,
+                    lead_id=lead_id,
+                )
+                if prefs := mem_context.get("preferences"):
+                    context["user_preferences"] = prefs.model_dump() if hasattr(prefs, "model_dump") else prefs
+                if summary := mem_context.get("long_term_summary"):
+                    context["long_term_summary"] = summary
+                if lead_hist := mem_context.get("lead_history"):
+                    context["lead_history"] = [h.model_dump() if hasattr(h, "model_dump") else h for h in lead_hist]
+            except Exception as exc:
+                logger.warning("Failed to fetch memory context: %s", exc)
 
         # Base payload template
         def make_payload(agent_id: str, ctx: dict) -> dict:
@@ -183,6 +212,12 @@ class BackendOrchestrator:
         )
         preferences = agt03_result.get("metadata", {}).get("preferences", {})
         context["preferences"] = preferences
+
+        if HAS_MEMORY and memory_manager is not None and preferences:
+            try:
+                await memory_manager.update_preferences(user_id, preferences)
+            except Exception as exc:
+                logger.warning("Failed to update preferences in memory: %s", exc)
 
         # Step 3: AGT-04 Property Agent — search properties
         logger.info("Orchestrate: calling AGT-04 (Property Agent)")
@@ -237,6 +272,37 @@ class BackendOrchestrator:
         final_response = self._build_final_response(
             agt03_result, agt04_result, agt05_result, agt02_result, agt06_result
         )
+
+        # Step 8: Memory persistence (turn, long term entry, lead history)
+        if HAS_MEMORY and memory_manager is not None:
+            try:
+                await memory_manager.append_turn(
+                    session_id=session_id,
+                    turn={"role": "user", "content": user_query},
+                )
+                await memory_manager.append_turn(
+                    session_id=session_id,
+                    turn={"role": "assistant", "content": final_response},
+                )
+                await memory_manager.write_long_term(
+                    user_id=user_id,
+                    memory_type="conversation_summary",
+                    content={
+                        "session_id": session_id,
+                        "query": user_query,
+                        "lead_grade": grade,
+                        "properties_count": len(ranked_properties),
+                    },
+                )
+                if lead_id:
+                    await memory_manager.append_lead_event(
+                        lead_id=lead_id,
+                        event_type="orchestrate_query",
+                        payload={"query": user_query, "grade": grade, "score": score},
+                        agent_id="ORCHESTRATOR",
+                    )
+            except Exception as exc:
+                logger.warning("Failed to persist orchestrator turns to memory: %s", exc)
 
         # Compute average confidence
         confidences = [

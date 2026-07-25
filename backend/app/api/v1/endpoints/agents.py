@@ -528,6 +528,45 @@ def get_session(
     return session
 
 
+# ── GET /agents/sessions/{id}/history ─────────────────────────────────────────
+
+@router.get(
+    "/sessions/{session_id}/history",
+    summary="Get full turn-by-turn history for a session from memory system",
+)
+async def get_session_turn_history(
+    session_id: str,
+    current_user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> dict:
+    if HAS_MEMORY and _memory_manager is not None:
+        try:
+            session_state = await _memory_manager.read_session(session_id)
+            if session_state and session_state.conversation_window:
+                return {
+                    "session_id": session_id,
+                    "turns": session_state.conversation_window,
+                    "current_search_filters": session_state.current_search_filters,
+                }
+        except Exception as exc:
+            logger.warning("Failed to fetch session history from memory manager: %s", exc)
+
+    # Fallback to Postgres AgentSession
+    try:
+        session_uuid = uuid.UUID(session_id)
+        session = db.get(AgentSession, session_uuid)
+        if session and (session.user_id == current_user.id or current_user.is_superuser):
+            return {
+                "session_id": session_id,
+                "turns": session.conversation_history or [],
+                "current_search_filters": {},
+            }
+    except Exception:
+        pass
+
+    return {"session_id": session_id, "turns": [], "current_search_filters": {}}
+
+
 # ── PATCH /agents/sessions/{id}/escalate ─────────────────────────────────────
 
 @router.patch(
