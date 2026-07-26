@@ -64,10 +64,11 @@ export default function SearchPage() {
         confidence: data.confidence,
         leadGrade: data.lead_grade,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Orchestration error:', err);
+      const error = err as { response?: { data?: { detail?: string } } };
       const errMsg =
-        err.response?.data?.detail || 'Failed to reach AI agents. Please check backend service.';
+        error?.response?.data?.detail || 'Failed to reach AI agents. Please check backend service.';
       setError(errMsg);
       addMessage({ role: 'assistant', content: `⚠️ Error: ${errMsg}` });
     } finally {

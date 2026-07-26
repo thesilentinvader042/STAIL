@@ -40,8 +40,9 @@ export default function RegisterPage() {
         language_preference: 'en',
       });
       navigate('/login', { state: { registered: true } });
-    } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Registration failed. Please check details.';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } };
+      const msg = error?.response?.data?.detail || 'Registration failed. Please check details.';
       setError(msg);
     } finally {
       setLoading(false);

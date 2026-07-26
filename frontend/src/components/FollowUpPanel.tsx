@@ -14,7 +14,7 @@ interface Props {
   leadName?: string;
 }
 
-export default function FollowUpPanel({ leadId, leadName }: Props) {
+export default function FollowUpPanel({ leadId: _leadId, leadName }: Props) {
   const [tasks, setTasks] = useState<FollowUpTask[]>([
     {
       id: 'task-1',

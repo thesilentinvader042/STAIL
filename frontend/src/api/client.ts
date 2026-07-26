@@ -21,10 +21,10 @@ apiClient.interceptors.request.use((config) => {
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;
-  reject: (err: any) => void;
+  reject: (err: Error) => void;
 }> = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -83,7 +83,7 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
       } catch (refreshErr) {
-        processQueue(refreshErr, null);
+        processQueue(refreshErr as Error, null);
         useAuthStore.getState().logout();
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';

@@ -116,7 +116,14 @@ export interface AgentChatResponse {
   agent_id: string;
   agent_name: string;
   response: string;
-  tool_calls?: any[];
+  tool_calls?: Array<{
+    id: string;
+    type: string;
+    function: {
+      name: string;
+      arguments: string;
+    };
+  }>;
   confidence_score?: number;
   escalated?: boolean;
   escalation_reason?: string;

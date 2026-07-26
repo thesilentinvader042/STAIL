@@ -23,8 +23,9 @@ export default function LoginPage() {
     try {
       await loginUser(email.trim(), password);
       navigate('/dashboard');
-    } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Invalid email or password.';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } };
+      const msg = error?.response?.data?.detail || 'Invalid email or password.';
       setError(msg);
     } finally {
       setLoading(false);

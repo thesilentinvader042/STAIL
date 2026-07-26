@@ -29,9 +29,10 @@ export default function PropertyListPage() {
         setPage(1);
         setTotalPages(1);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Fetch properties error:', err);
-      setError('Failed to load properties from backend.');
+      const error = err as { response?: { data?: { detail?: string } } };
+      setError(error?.response?.data?.detail || 'Failed to load properties from backend.');
     } finally {
       setLoading(false);
     }

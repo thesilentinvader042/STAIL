@@ -60,15 +60,16 @@ export default function LeadDetailPage() {
 
       // Attempt to load conversation transcript
       loadTranscriptForLead(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Fetch lead detail error:', err);
-      setError(err.response?.data?.detail || 'Failed to fetch lead profile.');
+      const error = err as { response?: { data?: { detail?: string } } };
+      setError(error?.response?.data?.detail || 'Failed to fetch lead profile.');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadTranscriptForLead = async (leadData: Lead) => {
+  const loadTranscriptForLead = async (_leadData: Lead) => {
     setLoadingTranscript(true);
     try {
       // Find session matching lead or fetch latest active session
@@ -114,9 +115,10 @@ export default function LeadDetailPage() {
     try {
       const res = await updateLead(leadId, { status: newStatus });
       setLead(res.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Status change error:', err);
-      alert(err.response?.data?.detail || 'Failed to update lead status.');
+      const error = err as { response?: { data?: { detail?: string } } };
+      alert(error?.response?.data?.detail || 'Failed to update lead status.');
     } finally {
       setUpdatingStatus(false);
     }
@@ -131,9 +133,10 @@ export default function LeadDetailPage() {
       setLead(res.data);
       setNotesSuccess(true);
       setTimeout(() => setNotesSuccess(false), 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Save notes error:', err);
-      alert(err.response?.data?.detail || 'Failed to save notes.');
+      const error = err as { response?: { data?: { detail?: string } } };
+      alert(error?.response?.data?.detail || 'Failed to save notes.');
     } finally {
       setSavingNotes(false);
     }
@@ -145,9 +148,10 @@ export default function LeadDetailPage() {
     try {
       const res = await qualifyLead(leadId);
       setLead(res.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Re-scoring error:', err);
-      alert(err.response?.data?.detail || 'Failed to re-score lead.');
+      const error = err as { response?: { data?: { detail?: string } } };
+      alert(error?.response?.data?.detail || 'Failed to re-score lead.');
     } finally {
       setQualifying(false);
     }

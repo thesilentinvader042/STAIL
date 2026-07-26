@@ -60,9 +60,10 @@ export default function PreferencePanel() {
       setIsEditing(false);
       setMessage('Preferences saved successfully!');
       setTimeout(() => setMessage(null), 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error saving preferences:', err);
-      setMessage('Failed to save preferences. Please try again.');
+      const error = err as { response?: { data?: { detail?: string } } };
+      setMessage(error?.response?.data?.detail || 'Failed to save preferences. Please try again.');
     } finally {
       setSaving(false);
     }

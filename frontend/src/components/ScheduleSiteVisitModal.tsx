@@ -41,9 +41,10 @@ export default function ScheduleSiteVisitModal({
       await scheduleSiteVisit(leadId, selectedDate.toISOString());
       if (onSuccess) onSuccess();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Schedule site visit error:', err);
-      setError(err.response?.data?.detail || 'Failed to schedule site visit.');
+      const error = err as { response?: { data?: { detail?: string } } };
+      setError(error?.response?.data?.detail || 'Failed to schedule site visit.');
     } finally {
       setLoading(false);
     }
