@@ -91,6 +91,7 @@ memory_system/
 
 # ── Task tracking & planning ──────────────────────────────────────────────────
 implementation_plan_*.md
+demo_video_plan.md
 Frontend_Phase_1.md
 phase1_3_verification.md
 tasks.md
